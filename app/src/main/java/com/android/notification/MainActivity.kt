@@ -4,14 +4,19 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
+import androidx.core.app.RemoteInput
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -34,18 +39,24 @@ class MainActivity : AppCompatActivity() {
         registerForActivityResult(RequestMultiplePermissions()) {
 
         }
-        .launch(
-            arrayOf(
-                Manifest.permission.POST_NOTIFICATIONS,
-                Manifest.permission.ACCESS_COARSE_LOCATION
+            .launch(
+                arrayOf(
+                    Manifest.permission.POST_NOTIFICATIONS,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
             )
-        )
 
         simpleChannel()
+        registerReceiver(simpleReplyReceiver, IntentFilter(SIMPLE_RECEIVER_ACTION))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(simpleReplyReceiver)
     }
 
     private fun simpleChannel() {
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val importance = NotificationManager.IMPORTANCE_HIGH
         val mChannel = NotificationChannel(channel, channel, importance).apply {
             description = channel
             setAllowBubbles(true)
@@ -163,6 +174,48 @@ class MainActivity : AppCompatActivity() {
         notificationCompat.apply {
             notify(SUMMARY_ID, summaryNotification)
             notify(random++ * 1000, newMessageNotification1)
+        }
+    }
+
+    private val SIMPLE_RECEIVER_ACTION = "com.android.notification.SIMPLE_RECEIVER_ACTION"
+    private val simpleReplyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val reply =
+                RemoteInput.getResultsFromIntent(intent!!)?.getCharSequence(SIMPLE_RECEIVER_ACTION)
+            Log.d("REPLY", "$reply")
+        }
+    }
+
+    fun simpleReply(v: View) {
+        val remoteInput = RemoteInput.Builder(SIMPLE_RECEIVER_ACTION).run {
+            setLabel(channel)
+            build()
+        }
+
+        val replyPendingIntent = PendingIntent.getBroadcast(
+            applicationContext,
+            random++,
+            Intent(SIMPLE_RECEIVER_ACTION),
+            PendingIntent.FLAG_MUTABLE
+        )
+
+        val action = NotificationCompat.Action.Builder(
+                R.drawable.ic_launcher_foreground,
+                channel, replyPendingIntent
+            )
+                .addRemoteInput(remoteInput)
+                .build()
+
+        val notification = NotificationCompat.Builder(this, channel)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("emailObject1.getSummary()")
+            .setContentText("You will not believe...")
+            .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
+            .addAction(action)
+            .build()
+
+        notificationCompat.apply {
+            notify(++random * 1000, notification)
         }
     }
 }
