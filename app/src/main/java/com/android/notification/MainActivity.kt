@@ -34,7 +34,9 @@ class MainActivity : AppCompatActivity() {
         getString(R.string.app_name)
     }
 
-    private var random = 0
+    private fun increment(number: Int) = number + 1
+
+    private val random by PseudoRandom(1000, ::increment)
 
     private val thread = HandlerThread("MINHA THREAD").apply {
         start()
@@ -69,11 +71,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun simpleChannel() {
         val importance = NotificationManager.IMPORTANCE_HIGH
-        val mChannel = NotificationChannel(channel, channel, importance).apply {
+        NotificationChannel(channel, channel, importance).apply {
             description = channel
             setAllowBubbles(true)
-        }
-        notificationCompat.createNotificationChannel(mChannel)
+        }.also(notificationCompat::createNotificationChannel)
     }
 
     fun simpleBubble(v: View) {
@@ -83,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         val bubbleIntent = PendingIntent.getActivity(context, 0, target, PendingIntent.FLAG_MUTABLE)
 
         val chatPartner = Person.Builder()
-            .setName("Chat partner ${random++}")
+            .setName("Chat partner $random")
             .setBot(true)
             .setImportant(true)
             .build()
@@ -117,7 +118,7 @@ class MainActivity : AppCompatActivity() {
             .addPerson(chatPartner)
             .build()
 
-        notificationCompat.notify(random * 1000, notification)
+        notificationCompat.notify(random, notification)
     }
 
     fun simpleNotificationGroupAndBubble(v: View) {
@@ -134,7 +135,7 @@ class MainActivity : AppCompatActivity() {
         val shortcutId = "SHORT_CUT_$random"
 
         val chatPartner = Person.Builder()
-            .setName("Chat partner ${random++}")
+            .setName("Chat partner $random")
             .setBot(true)
             .setImportant(true)
             .build()
@@ -147,7 +148,7 @@ class MainActivity : AppCompatActivity() {
 
         ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
 
-        val SUMMARY_ID = random++ * 1000
+        val SUMMARY_ID = random
         val GROUP_KEY_WORK_EMAIL = "com.android.example.WORK_EMAIL"
 
         val newMessageNotification1 = NotificationCompat.Builder(this, channel)
@@ -185,39 +186,21 @@ class MainActivity : AppCompatActivity() {
 
         notificationCompat.apply {
             notify(SUMMARY_ID, summaryNotification)
-            notify(random++ * 1000, newMessageNotification1)
+            notify(random, newMessageNotification1)
         }
     }
 
     private val SIMPLE_RECEIVER_ACTION = "com.android.notification.SIMPLE_RECEIVER_ACTION"
     private val simpleReplyReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val reply =
-                RemoteInput.getResultsFromIntent(intent!!)?.getCharSequence(SIMPLE_RECEIVER_ACTION)
+            val reply = RemoteInput
+                .getResultsFromIntent(intent ?: return)
+                ?.getCharSequence(SIMPLE_RECEIVER_ACTION)
             Log.d("REPLY", "$reply")
         }
     }
 
-    fun fibo(num: Int): Int {
-        if (num <= 1) return 1
-        return fibo(num - 1) + fibo(num - 2)
-    }
-
     fun simpleReply(v: View) {
-//        handler.postDelayed({
-//
-//            //varrer
-//            //lavar louca
-//            //aspirar
-//            fibo(10)
-//        }, 10000)
-
-        for (i in 0 until 10) {
-            val message = Message.obtain()
-            message.arg1 = i
-            handler.sendMessage(message)
-        }
-
         val remoteInput = RemoteInput.Builder(SIMPLE_RECEIVER_ACTION).run {
             setLabel(channel)
             build()
@@ -225,7 +208,7 @@ class MainActivity : AppCompatActivity() {
 
         val replyPendingIntent = PendingIntent.getBroadcast(
             applicationContext,
-            random++,
+            random,
             Intent(SIMPLE_RECEIVER_ACTION),
             PendingIntent.FLAG_MUTABLE
         )
@@ -246,7 +229,7 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         notificationCompat.apply {
-            notify(++random * 1000, notification)
+            notify(random, notification)
         }
     }
 }
