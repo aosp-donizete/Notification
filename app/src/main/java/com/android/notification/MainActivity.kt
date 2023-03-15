@@ -9,6 +9,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.Looper
+import android.os.Message
 import android.util.Log
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
@@ -31,6 +35,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var random = 0
+
+    private val thread = HandlerThread("MINHA THREAD").apply {
+        start()
+    }
+    private val handler = Handler(thread.looper) { message ->
+        println(message)
+        false
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -186,7 +198,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun fibo(num: Int): Int {
+        if (num <= 1) return 1
+        return fibo(num - 1) + fibo(num - 2)
+    }
+
     fun simpleReply(v: View) {
+//        handler.postDelayed({
+//
+//            //varrer
+//            //lavar louca
+//            //aspirar
+//            fibo(10)
+//        }, 10000)
+
+        for (i in 0 until 10) {
+            val message = Message.obtain()
+            message.arg1 = i
+            handler.sendMessage(message)
+        }
+
         val remoteInput = RemoteInput.Builder(SIMPLE_RECEIVER_ACTION).run {
             setLabel(channel)
             build()
