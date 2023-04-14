@@ -3,8 +3,10 @@
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
+        android:name=".MainApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -14,17 +16,22 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Notification">
         <activity
+            android:name=".MainActivity"
+            android:allowEmbedded="true"
+            android:exported="true"
+            android:resizeableActivity="true"
             android:showForAllUsers="true"
             android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            android:allowEmbedded="true"
-            android:resizeableActivity="true"
-            android:name=".MainActivity"
-            android:exported="true">
+            android:turnScreenOn="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".NotificationService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 </manifest>

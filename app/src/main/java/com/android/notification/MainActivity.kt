@@ -1,21 +1,16 @@
 package com.android.notification
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
-import android.os.Looper
-import android.os.Message
 import android.util.Log
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -26,55 +21,26 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 
 class MainActivity : AppCompatActivity() {
-    private val notificationCompat by lazy {
+    private val notificationManagerCompat by lazy {
         NotificationManagerCompat.from(this)
-    }
-
-    private val channel by lazy {
-        getString(R.string.app_name)
-    }
-
-    private fun increment(number: Int) = number + 1
-
-    private val random by PseudoRandom(1000, ::increment)
-
-    private val thread = HandlerThread("MINHA THREAD").apply {
-        start()
-    }
-    private val handler = Handler(thread.looper) { message ->
-        println(message)
-        false
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        registerForActivityResult(RequestMultiplePermissions()) {
-
-        }
-            .launch(
-                arrayOf(
-                    Manifest.permission.POST_NOTIFICATIONS,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
+        registerForActivityResult(RequestMultiplePermissions()) {}.launch(
+            arrayOf(
+                Manifest.permission.POST_NOTIFICATIONS,
+                Manifest.permission.ACCESS_COARSE_LOCATION
             )
-
-        simpleChannel()
+        )
         registerReceiver(simpleReplyReceiver, IntentFilter(SIMPLE_RECEIVER_ACTION))
     }
 
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(simpleReplyReceiver)
-    }
-
-    private fun simpleChannel() {
-        val importance = NotificationManager.IMPORTANCE_HIGH
-        NotificationChannel(channel, channel, importance).apply {
-            description = channel
-            setAllowBubbles(true)
-        }.also(notificationCompat::createNotificationChannel)
     }
 
     fun simpleBubble(v: View) {
@@ -84,12 +50,12 @@ class MainActivity : AppCompatActivity() {
         val bubbleIntent = PendingIntent.getActivity(context, 0, target, PendingIntent.FLAG_MUTABLE)
 
         val chatPartner = Person.Builder()
-            .setName("Chat partner $random")
+            .setName("Chat partner ${MainApplication.UTILS.RANDOM}")
             .setBot(true)
             .setImportant(true)
             .build()
 
-        val shortcutId = "SHORT_CUT_$random"
+        val shortcutId = "SHORT_CUT_${MainApplication.UTILS.RANDOM}"
 
         val shortcut = ShortcutInfoCompat.Builder(context, shortcutId)
             .setIntent(Intent(Intent.ACTION_DEFAULT))
@@ -106,7 +72,7 @@ class MainActivity : AppCompatActivity() {
             icon
         ).setDesiredHeight(600).build()
 
-        val notification = NotificationCompat.Builder(context, channel)
+        val notification = NotificationCompat.Builder(context, MainApplication.CHANNEL.ID)
             .setContentIntent(bubbleIntent)
             .setSmallIcon(icon)
             .setStyle(
@@ -118,12 +84,17 @@ class MainActivity : AppCompatActivity() {
             .addPerson(chatPartner)
             .build()
 
-        notificationCompat.notify(random, notification)
+        notificationManagerCompat.notify(MainApplication.UTILS.RANDOM, notification)
     }
 
     fun simpleNotificationGroupAndBubble(v: View) {
         val target = Intent(this, MainActivity::class.java)
-        val bubbleIntent = PendingIntent.getActivity(this, 0, target, PendingIntent.FLAG_MUTABLE)
+        val bubbleIntent = PendingIntent.getActivity(
+            this,
+            MainApplication.UTILS.RANDOM,
+            target,
+            PendingIntent.FLAG_MUTABLE
+        )
 
         val icon = IconCompat.createWithResource(this, R.drawable.ic_launcher_foreground)
 
@@ -132,10 +103,10 @@ class MainActivity : AppCompatActivity() {
             icon
         ).setDesiredHeight(600).build()
 
-        val shortcutId = "SHORT_CUT_$random"
+        val shortcutId = "SHORT_CUT_${MainApplication.UTILS.RANDOM}"
 
         val chatPartner = Person.Builder()
-            .setName("Chat partner $random")
+            .setName("Chat partner ${MainApplication.UTILS.RANDOM}")
             .setBot(true)
             .setImportant(true)
             .build()
@@ -148,14 +119,14 @@ class MainActivity : AppCompatActivity() {
 
         ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
 
-        val SUMMARY_ID = random
+        val SUMMARY_ID = MainApplication.UTILS.RANDOM
         val GROUP_KEY_WORK_EMAIL = "com.android.example.WORK_EMAIL"
 
-        val newMessageNotification1 = NotificationCompat.Builder(this, channel)
+        val newMessageNotification = NotificationCompat.Builder(this, MainApplication.CHANNEL.ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentIntent(bubbleIntent)
-            .setContentTitle("emailObject1.getSummary()")
-            .setContentText("You will not believe...")
+            .setContentTitle("Title here")
+            .setContentText("Text here")
             .setStyle(
                 NotificationCompat.MessagingStyle(chatPartner)
             )
@@ -166,7 +137,7 @@ class MainActivity : AppCompatActivity() {
             .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
             .build()
 
-        val summaryNotification = NotificationCompat.Builder(this, channel)
+        val summaryNotification = NotificationCompat.Builder(this, MainApplication.CHANNEL.ID)
             .setContentTitle("emailObject.getSummary()")
             .setContentIntent(bubbleIntent)
             //set content text to support devices running API level < 24
@@ -184,9 +155,9 @@ class MainActivity : AppCompatActivity() {
             .setGroupSummary(true)
             .build()
 
-        notificationCompat.apply {
+        notificationManagerCompat.apply {
             notify(SUMMARY_ID, summaryNotification)
-            notify(random, newMessageNotification1)
+            notify(MainApplication.UTILS.RANDOM, newMessageNotification)
         }
     }
 
@@ -202,34 +173,75 @@ class MainActivity : AppCompatActivity() {
 
     fun simpleReply(v: View) {
         val remoteInput = RemoteInput.Builder(SIMPLE_RECEIVER_ACTION).run {
-            setLabel(channel)
+            setLabel("Label here")
             build()
         }
 
-        val replyPendingIntent = PendingIntent.getBroadcast(
-            applicationContext,
-            random,
+        val pending = PendingIntent.getBroadcast(
+            this,
+            MainApplication.UTILS.RANDOM,
             Intent(SIMPLE_RECEIVER_ACTION),
             PendingIntent.FLAG_MUTABLE
         )
 
         val action = NotificationCompat.Action.Builder(
-                R.drawable.ic_launcher_foreground,
-                channel, replyPendingIntent
-            )
-                .addRemoteInput(remoteInput)
-                .build()
+            R.drawable.ic_launcher_foreground,
+            MainApplication.CHANNEL.ID, pending
+        )
+            .addRemoteInput(remoteInput)
+            .build()
 
-        val notification = NotificationCompat.Builder(this, channel)
+        val notification = NotificationCompat.Builder(this, MainApplication.CHANNEL.ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("emailObject1.getSummary()")
-            .setContentText("You will not believe...")
+            .setContentTitle("Title here")
+            .setContentText("Text here")
             .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
             .addAction(action)
             .build()
 
-        notificationCompat.apply {
-            notify(random, notification)
+        notificationManagerCompat.notify(MainApplication.UTILS.RANDOM, notification)
+    }
+
+    fun simpleAction(v: View) {
+        val intent = Intent(this, MainActivity::class.java)
+        val pending = PendingIntent.getActivity(
+            this,
+            MainApplication.UTILS.RANDOM,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val action = NotificationCompat.Action(
+            R.drawable.ic_launcher_foreground,
+            "Clique em mim",
+            pending
+        )
+
+        val notification = NotificationCompat.Builder(this, MainApplication.CHANNEL.ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Title here")
+            .setContentText("Text here")
+            .addAction(action)
+            .build()
+
+        notificationManagerCompat.notify(MainApplication.UTILS.RANDOM, notification)
+    }
+
+    fun simpleAlert(v: View) {
+        val alert = AlertDialog.Builder(this)
+        alert.setPositiveButton("Eu aceito") { dialog, which ->
+
         }
+        alert.setNegativeButton("Eu não aceito") { dialog, which ->
+
+        }
+        alert.setNeutralButton("MEU NOME É ARI") { dialog, which ->
+
+        }
+        alert.setTitle("Algo deu errado!!!")
+        alert.setMessage("Você poderia por favor escutar o que eu digo?????")
+        alert.show()
+
+        MyDialog().show(supportFragmentManager, null)
     }
 }
