@@ -47,7 +47,12 @@ class MainActivity : AppCompatActivity() {
         val context = this
 
         val target = Intent(context, MainActivity::class.java)
-        val bubbleIntent = PendingIntent.getActivity(context, 0, target, PendingIntent.FLAG_MUTABLE)
+        val bubbleIntent = PendingIntent.getActivity(
+            context,
+            MainApplication.UTILS.RANDOM,
+            target,
+            PendingIntent.FLAG_MUTABLE
+        )
 
         val chatPartner = Person.Builder()
             .setName("Chat partner ${MainApplication.UTILS.RANDOM}")
@@ -222,6 +227,7 @@ class MainActivity : AppCompatActivity() {
             .setContentTitle("Title here")
             .setContentText("Text here")
             .addAction(action)
+            .setVibrate(longArrayOf(1000, 1000, 1000))
             .build()
 
         notificationManagerCompat.notify(MainApplication.UTILS.RANDOM, notification)

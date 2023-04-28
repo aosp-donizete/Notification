@@ -18,9 +18,11 @@ class MainApplication : Application() {
     private fun startNotificationChannel() {
         val notificationManagerCompat = NotificationManagerCompat.from(this)
         NotificationChannelCompat
-            .Builder(CHANNEL.ID, NotificationManagerCompat.IMPORTANCE_HIGH)
+            .Builder(CHANNEL.ID, NotificationManagerCompat.IMPORTANCE_DEFAULT)
             .setName("My notification channel")
             .setDescription("Minha descrição")
+            .setVibrationEnabled(true)
+            .setVibrationPattern(longArrayOf(1000, 1000, 1000))
             .build()
             .apply(notificationManagerCompat::createNotificationChannel)
     }
