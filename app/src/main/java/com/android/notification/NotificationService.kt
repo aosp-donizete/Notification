@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
 class NotificationService : Service() {
@@ -13,16 +12,12 @@ class NotificationService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private val handler = Handler(Looper.getMainLooper())
-    private val notificationManagerCompat by lazy {
-        NotificationManagerCompat.from(this)
+
+    private val notificationCreator by lazy {
+        NotificationCreator(this)
     }
     private val notification by lazy {
-        NotificationCompat.Builder(this, MainApplication.CHANNEL.ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Service title here")
-            .setContentText("Service text here")
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .build()
+        notificationCreator.createReply()
     }
 
     override fun onCreate() {
@@ -32,7 +27,9 @@ class NotificationService : Service() {
     }
 
     private fun startNotificationTimer() {
-        notificationManagerCompat.notify(MainApplication.UTILS.RANDOM, notification)
-        handler.postDelayed(::startNotificationTimer, 2000)
+        notificationCreator.notificator {
+            notify(notification)
+        }
+        handler.postDelayed(::startNotificationTimer, 10000)
     }
 }

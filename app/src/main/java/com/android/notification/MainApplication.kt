@@ -18,7 +18,7 @@ class MainApplication : Application() {
     private fun startNotificationChannel() {
         val notificationManagerCompat = NotificationManagerCompat.from(this)
         NotificationChannelCompat
-            .Builder(CHANNEL.ID, NotificationManagerCompat.IMPORTANCE_DEFAULT)
+            .Builder(CHANNEL.ID, NotificationManagerCompat.IMPORTANCE_MAX)
             .setName("My notification channel")
             .setDescription("Minha descrição")
             .setVibrationEnabled(true)
@@ -33,5 +33,9 @@ class MainApplication : Application() {
 
     object UTILS {
         val RANDOM by PseudoRandom(1000, Int::inc)
+    }
+
+    object ACTION {
+        val SIMPLE_RECEIVER_ACTION = "com.android.notification.SIMPLE_RECEIVER_ACTION"
     }
 }
